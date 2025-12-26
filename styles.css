@@ -216,6 +216,8 @@ body {
     display: flex;
     align-items: center;
     padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .button-background {
