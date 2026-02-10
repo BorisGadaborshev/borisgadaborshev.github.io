@@ -3,6 +3,19 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
+  /**
+   * GitHub Pages:
+   * - User/Org pages repo: <name>.github.io  -> base should be '/'
+   * - Project pages repo:  <repo>            -> base should be '/<repo>/'
+   */
+  base: (() => {
+    const repo = process.env.GITHUB_REPOSITORY?.split('/')[1];
+    const isActions = process.env.GITHUB_ACTIONS === 'true';
+
+    if (!isActions || !repo) return '/';
+    if (repo.endsWith('.github.io')) return '/';
+    return `/${repo}/`;
+  })(),
   plugins: [
     react({
       jsxImportSource: '@emotion/react',

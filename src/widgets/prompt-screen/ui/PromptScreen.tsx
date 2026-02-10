@@ -2,9 +2,9 @@ import styled from '@emotion/styled';
 import { FC, ChangeEvent } from 'react';
 import { Button } from '@shared/ui';
 
-import favoritesIcon from '/images/favorites-icon.svg';
-import phoneTop from '/images/phoneTop.png';
-import phoneBottom from '/images/phoneBottom.png';
+const favoritesIcon = `${import.meta.env.BASE_URL}images/favorites-icon.svg`;
+const phoneTop = `${import.meta.env.BASE_URL}images/phoneTop.png`;
+const phoneBottom = `${import.meta.env.BASE_URL}images/phoneBottom.png`;
 
 const BackgroundLayer = styled.div`
   position: absolute;

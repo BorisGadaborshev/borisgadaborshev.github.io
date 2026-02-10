@@ -4,9 +4,9 @@ import { Background } from './Background';
 import { Header } from './Header';
 import { Content } from './Content';
 
-import menuIcon from '/images/menu-icon.svg';
-import arrowsIcon from '/images/arrows.svg';
-import galleryIcon from '/images/gallery-icon.svg';
+const menuIcon = `${import.meta.env.BASE_URL}images/menu-icon.svg`;
+const arrowsIcon = `${import.meta.env.BASE_URL}images/arrows.svg`;
+const galleryIcon = `${import.meta.env.BASE_URL}images/gallery-icon.svg`;
 
 interface MainScreenProps {
   onImageSelect: (event: ChangeEvent<HTMLInputElement>) => void;

@@ -1,8 +1,8 @@
 import styled from '@emotion/styled';
 import { FC } from 'react';
 
-import phoneTop from '/images/phoneTop.png';
-import phoneBottom from '/images/phoneBottom.png';
+const phoneTop = `${import.meta.env.BASE_URL}images/phoneTop.png`;
+const phoneBottom = `${import.meta.env.BASE_URL}images/phoneBottom.png`;
 
 const BackgroundContainer = styled.div`
   position: absolute;
