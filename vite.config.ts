@@ -16,6 +16,11 @@ export default defineConfig({
     if (repo.endsWith('.github.io')) return '/';
     return `/${repo}/`;
   })(),
+  // Для GitHub Pages без Actions: собираем в /docs и включаем "Deploy from a branch".
+  build: {
+    outDir: 'docs',
+    emptyOutDir: true,
+  },
   plugins: [
     react({
       jsxImportSource: '@emotion/react',
