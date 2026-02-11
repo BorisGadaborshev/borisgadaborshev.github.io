@@ -12,6 +12,7 @@ const Viewport = styled.div`
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
+  overflow: hidden;
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
 `;
@@ -66,7 +67,12 @@ export const ScaledViewport: FC<ScaledViewportProps> = ({
 
       const availableWidth = viewportEl.clientWidth - paddingX;
       const availableHeight = viewportEl.clientHeight - paddingY;
-      const nextScale = Math.min(1, availableWidth / stageWidth, availableHeight / stageHeight);
+      // Use "cover" behavior for mobile full-screen:
+      // fill both dimensions and crop overflow on the opposite axis.
+      const nextScale = Math.min(
+        1,
+        Math.max(availableWidth / stageWidth, availableHeight / stageHeight),
+      );
 
       // Avoid re-render loops due to tiny float deltas.
       const rounded = Math.max(0, Math.floor(nextScale * 1000) / 1000);
