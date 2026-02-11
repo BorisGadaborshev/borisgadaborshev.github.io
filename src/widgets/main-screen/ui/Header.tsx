@@ -1,15 +1,6 @@
 import styled from '@emotion/styled';
 import { FC } from 'react';
-
-const MenuIcon = styled.img`
-  position: absolute;
-  left: 20px;
-  top: 54px;
-  width: 27px;
-  height: 27px;
-  z-index: 4;
-  cursor: pointer;
-`;
+import { FlowMenu, FlowStep } from '@shared/ui';
 
 const FeaturesPreview = styled.div`
   position: absolute;
@@ -33,12 +24,28 @@ const FeaturesPreview = styled.div`
 
 interface HeaderProps {
   menuIcon: string;
+  currentStep: FlowStep;
+  onStepSelect: (step: FlowStep) => void;
+  canOpenPrompt?: boolean;
+  canOpenPayment?: boolean;
 }
 
-export const Header: FC<HeaderProps> = ({ menuIcon }) => {
+export const Header: FC<HeaderProps> = ({
+  menuIcon,
+  currentStep,
+  onStepSelect,
+  canOpenPrompt,
+  canOpenPayment,
+}) => {
   return (
     <>
-      <MenuIcon src={menuIcon} alt="Menu" />
+      <FlowMenu
+        menuIcon={menuIcon}
+        currentStep={currentStep}
+        onStepSelect={onStepSelect}
+        canOpenPrompt={canOpenPrompt}
+        canOpenPayment={canOpenPayment}
+      />
       <FeaturesPreview />
     </>
   );

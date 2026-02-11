@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { FC, useMemo, useState } from 'react';
 import { useImageUpload } from '@entities/image-upload';
-import { ScaledViewport } from '@shared/ui';
+import { FlowStep, ScaledViewport } from '@shared/ui';
 import { MainScreen } from '@widgets/main-screen';
 import { PromptScreen } from '@widgets/prompt-screen';
 import { PaymentStatusScreen } from '@widgets/payment-screen';
@@ -80,7 +80,7 @@ const ModalButton = styled.button<{ primary?: boolean }>`
 `;
 
 export const App: FC = () => {
-  const { image, handleFileSelect } = useImageUpload();
+  const { image, handleFileSelect, clearImage } = useImageUpload();
   const [prompt, setPrompt] = useState('');
   const [creatingPayment, setCreatingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -99,6 +99,7 @@ export const App: FC = () => {
 
   const showPrompt = Boolean(image);
   const direction = useMemo(() => (showPrompt ? 'forward' : 'back'), [showPrompt]);
+  const currentStep: FlowStep = showPaymentStatus || paymentModalOpen ? 'payment' : showPrompt ? 'prompt' : 'select';
 
   const startPayment = async () => {
     setCreatingPayment(true);
@@ -132,18 +133,53 @@ export const App: FC = () => {
     }
   };
 
+  const handleBackToMain = () => {
+    setPrompt('');
+    setPaymentModalOpen(false);
+    setPaymentError(null);
+    clearImage();
+  };
+
+  const handleStepSelect = (step: FlowStep) => {
+    if (step === 'select') {
+      handleBackToMain();
+      return;
+    }
+
+    if (step === 'prompt') {
+      if (!image) return;
+      setPaymentModalOpen(false);
+      setPaymentError(null);
+      return;
+    }
+
+    if (!image) return;
+    setPaymentError(null);
+    setPaymentModalOpen(true);
+  };
+
   return (
     <AppProviders>
       <ScaledViewport>
         <ScreenStack>
           <ScreenLayer active={!showPrompt} direction={direction}>
-            <MainScreen onImageSelect={handleFileSelect} />
+            <MainScreen
+              onImageSelect={handleFileSelect}
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt={Boolean(image)}
+              canOpenPayment={Boolean(image)}
+            />
           </ScreenLayer>
           <ScreenLayer active={showPrompt} direction={direction}>
             <PromptScreen
               prompt={prompt}
               onPromptChange={setPrompt}
               onSubmit={() => setPaymentModalOpen(true)}
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt={Boolean(image)}
+              canOpenPayment={Boolean(image)}
             />
           </ScreenLayer>
         </ScreenStack>

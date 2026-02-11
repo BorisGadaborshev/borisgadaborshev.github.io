@@ -1,10 +1,11 @@
 import styled from '@emotion/styled';
 import { FC, ChangeEvent } from 'react';
-import { Button } from '@shared/ui';
+import { Button, FlowMenu, FlowStep } from '@shared/ui';
 
 const favoritesIcon = `${import.meta.env.BASE_URL}images/favorites-icon.svg`;
 const phoneTop = `${import.meta.env.BASE_URL}images/phoneTop.png`;
 const phoneBottom = `${import.meta.env.BASE_URL}images/phoneBottom.png`;
+const menuIcon = `${import.meta.env.BASE_URL}images/menu-icon.svg`;
 
 const BackgroundLayer = styled.div`
   position: absolute;
@@ -144,12 +145,20 @@ interface PromptScreenProps {
   prompt: string;
   onPromptChange: (next: string) => void;
   onSubmit?: () => void;
+  currentStep: FlowStep;
+  onStepSelect: (step: FlowStep) => void;
+  canOpenPrompt?: boolean;
+  canOpenPayment?: boolean;
 }
 
 export const PromptScreen: FC<PromptScreenProps> = ({
   prompt,
   onPromptChange,
   onSubmit,
+  currentStep,
+  onStepSelect,
+  canOpenPrompt,
+  canOpenPayment,
 }) => {
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     onPromptChange(e.target.value);
@@ -157,6 +166,13 @@ export const PromptScreen: FC<PromptScreenProps> = ({
 
   return (
     <>
+      <FlowMenu
+        menuIcon={menuIcon}
+        currentStep={currentStep}
+        onStepSelect={onStepSelect}
+        canOpenPrompt={canOpenPrompt}
+        canOpenPayment={canOpenPayment}
+      />
       <BackgroundLayer>
         <PhoneTop src={phoneTop} alt="" />
         <PhoneBottom src={phoneBottom} alt="" />
