@@ -27,8 +27,123 @@ function json(res, status, body) {
   res.status(status).json(body);
 }
 
+const PROMPT_QUALITY_SYSTEM_PROMPT = `Ты senior AI Prompt Engineer.
+Твоя задача: оценить качество пользовательского промпта и вернуть структурированную обратную связь.
+
+Правила анализа:
+1) Оцени промпт по шкале 0-100.
+2) Дай короткий вердикт в 1 предложении (на русском).
+3) Опиши слабые стороны в 2-4 коротких абзацах (на русском).
+4) Дай 4 точечных рекомендации по улучшению (каждая рекомендация с новой строки).
+5) Сформируй улучшенный вариант промпта на русском, сохраняя изначальную задачу пользователя.
+6) Не придумывай факты, которых нет в промпте.
+7) Ответ верни ТОЛЬКО валидным JSON без markdown и пояснений.
+
+Формат JSON:
+{
+  "score": <number 0..100>,
+  "verdict": "<string>",
+  "weaknesses": "<string>",
+  "recommendations": ["<string>", "<string>", "<string>", "<string>"],
+  "improvedPrompt": "<string>"
+}`;
+
+function aiAuthHeader() {
+  const token = requireEnv('LLM_API_KEY');
+  return `Bearer ${token}`;
+}
+
+function getAiConfig() {
+  return {
+    url: process.env.LLM_API_URL || 'https://openrouter.ai/api/v1/chat/completions',
+    model: process.env.LLM_MODEL || 'openai/gpt-4o-mini',
+  };
+}
+
+function extractJsonPayload(rawContent) {
+  const trimmed = String(rawContent || '').trim();
+  if (!trimmed) return null;
+
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  const candidate = fenced ? fenced[1] : trimmed;
+  const firstBrace = candidate.indexOf('{');
+  const lastBrace = candidate.lastIndexOf('}');
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace < firstBrace) return null;
+
+  const maybeJson = candidate.slice(firstBrace, lastBrace + 1);
+  try {
+    return JSON.parse(maybeJson);
+  } catch {
+    return null;
+  }
+}
+
 app.get('/api/health', (_req, res) => {
   json(res, 200, { ok: true });
+});
+
+app.post('/api/prompt-quality/analyze', async (req, res) => {
+  try {
+    const inputPrompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
+    if (!inputPrompt) {
+      return json(res, 400, { error: 'bad_request', message: 'Prompt is required.' });
+    }
+
+    const { url, model } = getAiConfig();
+
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: aiAuthHeader(),
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        messages: [
+          { role: 'system', content: PROMPT_QUALITY_SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: `Оцени этот промпт и верни JSON по формату:\n\n${inputPrompt}`,
+          },
+        ],
+      }),
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) {
+      return json(res, resp.status, { error: 'llm_error', details: data });
+    }
+
+    const content = data?.choices?.[0]?.message?.content;
+    const parsed = extractJsonPayload(content);
+    if (!parsed) {
+      return json(res, 502, {
+        error: 'invalid_llm_response',
+        message: 'LLM response is not valid JSON.',
+        raw: content,
+      });
+    }
+
+    const score = Number(parsed?.score);
+    const verdict = typeof parsed?.verdict === 'string' ? parsed.verdict : '';
+    const weaknesses = typeof parsed?.weaknesses === 'string' ? parsed.weaknesses : '';
+    const recommendations = Array.isArray(parsed?.recommendations)
+      ? parsed.recommendations.filter((x) => typeof x === 'string').slice(0, 6)
+      : [];
+    const improvedPrompt =
+      typeof parsed?.improvedPrompt === 'string' ? parsed.improvedPrompt : '';
+
+    return json(res, 200, {
+      score: Number.isFinite(score) ? Math.max(0, Math.min(100, score)) : 0,
+      verdict,
+      weaknesses,
+      recommendations,
+      improvedPrompt,
+    });
+  } catch (e) {
+    return json(res, 500, { error: 'server_error', message: e?.message || String(e) });
+  }
 });
 
 app.post('/api/yookassa/create-payment', async (req, res) => {

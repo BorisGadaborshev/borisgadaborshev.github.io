@@ -3,9 +3,18 @@ import { FC, useMemo, useState } from 'react';
 import { useImageUpload } from '@entities/image-upload';
 import { FlowStep, ScaledViewport } from '@shared/ui';
 import { MainScreen } from '@widgets/main-screen';
+import {
+  PromptQualityImprovedScreen,
+  PromptQualityResultData,
+  PromptQualityResultScreen,
+  PromptQualityScreen,
+} from '@widgets/prompt-quality-screen';
 import { PromptScreen } from '@widgets/prompt-screen';
 import { PaymentStatusScreen } from '@widgets/payment-screen';
 import { AppProviders } from './providers';
+
+const APP_MODE = import.meta.env.VITE_APP_MODE === 'prompt-check' ? 'prompt-check' : 'livpic';
+const IS_PROMPT_CHECK_MODE = APP_MODE === 'prompt-check';
 
 const ScreenStack = styled.div`
   position: absolute;
@@ -82,9 +91,16 @@ const ModalButton = styled.button<{ primary?: boolean }>`
 export const App: FC = () => {
   const { image, handleFileSelect, clearImage } = useImageUpload();
   const [prompt, setPrompt] = useState('');
+  const [qualityPrompt, setQualityPrompt] = useState('');
+  const [qualityLoading, setQualityLoading] = useState(false);
+  const [qualityError, setQualityError] = useState<string | null>(null);
+  const [qualityResult, setQualityResult] = useState<PromptQualityResultData | null>(null);
+  const [showQualityImproved, setShowQualityImproved] = useState(false);
+  const [qualityCopied, setQualityCopied] = useState(false);
   const [creatingPayment, setCreatingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [showQualityScreen, setShowQualityScreen] = useState(IS_PROMPT_CHECK_MODE);
 
   const search = typeof window !== 'undefined' ? window.location.search : '';
   const params = useMemo(() => new URLSearchParams(search), [search]);
@@ -97,9 +113,24 @@ export const App: FC = () => {
     typeof window !== 'undefined' ? sessionStorage.getItem('yookassa_payment_id') : null;
   const showPaymentStatus = Boolean(isYooKassaReturn && paymentIdFromStorage);
 
-  const showPrompt = Boolean(image);
-  const direction = useMemo(() => (showPrompt ? 'forward' : 'back'), [showPrompt]);
-  const currentStep: FlowStep = showPaymentStatus || paymentModalOpen ? 'payment' : showPrompt ? 'prompt' : 'select';
+  const showPrompt = !IS_PROMPT_CHECK_MODE && Boolean(image) && !showQualityScreen;
+  const showMain = !IS_PROMPT_CHECK_MODE && !showPrompt && !showQualityScreen;
+  const showQualityInput = showQualityScreen && !qualityResult && !showQualityImproved;
+  const showQualityResult = showQualityScreen && Boolean(qualityResult) && !showQualityImproved;
+  const showQualityImprovedScreen = showQualityScreen && showQualityImproved;
+  const direction = useMemo(
+    () => (showPrompt || showQualityScreen ? 'forward' : 'back'),
+    [showPrompt, showQualityScreen],
+  );
+  const currentStep: FlowStep = IS_PROMPT_CHECK_MODE
+    ? 'quality'
+    : showQualityScreen
+    ? 'quality'
+    : showPaymentStatus || paymentModalOpen
+      ? 'payment'
+      : showPrompt
+        ? 'prompt'
+        : 'select';
 
   const startPayment = async () => {
     setCreatingPayment(true);
@@ -134,6 +165,12 @@ export const App: FC = () => {
   };
 
   const handleBackToMain = () => {
+    setShowQualityScreen(false);
+    setShowQualityImproved(false);
+    setQualityCopied(false);
+    setQualityResult(null);
+    setQualityError(null);
+    setQualityLoading(false);
     setPrompt('');
     setPaymentModalOpen(false);
     setPaymentError(null);
@@ -141,6 +178,18 @@ export const App: FC = () => {
   };
 
   const handleStepSelect = (step: FlowStep) => {
+    if (step === 'quality') {
+      setQualityError(null);
+      setShowQualityImproved(false);
+      setQualityCopied(false);
+      setQualityResult(null);
+      setQualityPrompt((prev) => prev || prompt);
+      setPaymentModalOpen(false);
+      setPaymentError(null);
+      setShowQualityScreen(true);
+      return;
+    }
+
     if (step === 'select') {
       handleBackToMain();
       return;
@@ -148,27 +197,87 @@ export const App: FC = () => {
 
     if (step === 'prompt') {
       if (!image) return;
+      setShowQualityScreen(false);
+      setShowQualityImproved(false);
+      setQualityCopied(false);
+      setQualityResult(null);
       setPaymentModalOpen(false);
       setPaymentError(null);
       return;
     }
 
     if (!image) return;
+    setShowQualityScreen(false);
     setPaymentError(null);
     setPaymentModalOpen(true);
+  };
+
+  const handleAnalyzeQualityPrompt = async () => {
+    const trimmed = qualityPrompt.trim();
+    if (!trimmed) {
+      setQualityError('Введите промпт перед проверкой.');
+      return;
+    }
+
+    setQualityLoading(true);
+    setQualityError(null);
+    try {
+      const resp = await fetch('/api/prompt-quality/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: trimmed }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data?.message || data?.error || 'Не удалось проанализировать промпт.');
+      }
+
+      setQualityResult({
+        score: Number(data?.score ?? 0),
+        verdict: String(data?.verdict ?? 'Результат анализа готов.'),
+        weaknesses: String(data?.weaknesses ?? ''),
+        recommendations: Array.isArray(data?.recommendations) ? data.recommendations : [],
+        improvedPrompt: String(data?.improvedPrompt ?? ''),
+      });
+      setShowQualityImproved(false);
+      setQualityCopied(false);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setQualityError(msg);
+    } finally {
+      setQualityLoading(false);
+    }
+  };
+
+  const handleImprovePrompt = () => {
+    if (!qualityResult?.improvedPrompt) return;
+    setPrompt(qualityResult.improvedPrompt);
+    setQualityPrompt(qualityResult.improvedPrompt);
+    setShowQualityImproved(true);
+  };
+
+  const handleCopyImprovedPrompt = async () => {
+    if (!qualityResult?.improvedPrompt) return;
+    try {
+      await navigator.clipboard.writeText(qualityResult.improvedPrompt);
+      setQualityCopied(true);
+    } catch {
+      setQualityCopied(false);
+    }
   };
 
   return (
     <AppProviders>
       <ScaledViewport>
         <ScreenStack>
-          <ScreenLayer active={!showPrompt} direction={direction}>
+          <ScreenLayer active={showMain} direction={direction}>
             <MainScreen
               onImageSelect={handleFileSelect}
               currentStep={currentStep}
               onStepSelect={handleStepSelect}
               canOpenPrompt={Boolean(image)}
               canOpenPayment={Boolean(image)}
+              canOpenQuality
             />
           </ScreenLayer>
           <ScreenLayer active={showPrompt} direction={direction}>
@@ -180,7 +289,49 @@ export const App: FC = () => {
               onStepSelect={handleStepSelect}
               canOpenPrompt={Boolean(image)}
               canOpenPayment={Boolean(image)}
+              canOpenQuality
             />
+          </ScreenLayer>
+          <ScreenLayer active={showQualityInput} direction={direction}>
+            <PromptQualityScreen
+              promptValue={qualityPrompt}
+              onPromptChange={setQualityPrompt}
+              onAnalyze={() => void handleAnalyzeQualityPrompt()}
+              loading={qualityLoading}
+              error={qualityError}
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt={Boolean(image)}
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+            />
+          </ScreenLayer>
+          <ScreenLayer active={showQualityResult} direction={direction}>
+            {qualityResult ? (
+              <PromptQualityResultScreen
+                result={qualityResult}
+                onImprovePrompt={handleImprovePrompt}
+                currentStep={currentStep}
+                onStepSelect={handleStepSelect}
+                canOpenPrompt={Boolean(image)}
+                canOpenPayment={Boolean(image)}
+                canOpenQuality
+              />
+            ) : null}
+          </ScreenLayer>
+          <ScreenLayer active={showQualityImprovedScreen} direction={direction}>
+            {qualityResult ? (
+              <PromptQualityImprovedScreen
+                improvedPrompt={qualityResult.improvedPrompt}
+                copied={qualityCopied}
+                onCopy={() => void handleCopyImprovedPrompt()}
+                currentStep={currentStep}
+                onStepSelect={handleStepSelect}
+                canOpenPrompt={Boolean(image)}
+                canOpenPayment={Boolean(image)}
+                canOpenQuality
+              />
+            ) : null}
           </ScreenLayer>
         </ScreenStack>
 

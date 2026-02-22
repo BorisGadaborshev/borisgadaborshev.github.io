@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { FC, useEffect, useRef, useState } from 'react';
 
-export type FlowStep = 'select' | 'prompt' | 'payment';
+export type FlowStep = 'select' | 'prompt' | 'payment' | 'quality';
 
 interface FlowMenuProps {
   menuIcon: string;
@@ -9,6 +9,7 @@ interface FlowMenuProps {
   onStepSelect: (step: FlowStep) => void;
   canOpenPrompt?: boolean;
   canOpenPayment?: boolean;
+  canOpenQuality?: boolean;
 }
 
 const MenuRoot = styled.div`
@@ -74,6 +75,7 @@ export const FlowMenu: FC<FlowMenuProps> = ({
   onStepSelect,
   canOpenPrompt = true,
   canOpenPayment = true,
+  canOpenQuality = true,
 }) => {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -129,6 +131,14 @@ export const FlowMenu: FC<FlowMenuProps> = ({
             onClick={() => handleStepClick('payment')}
           >
             Оплата
+          </StepItem>
+          <StepItem
+            type="button"
+            active={currentStep === 'quality'}
+            disabled={!canOpenQuality}
+            onClick={() => handleStepClick('quality')}
+          >
+            Проверка промпта
           </StepItem>
         </Dropdown>
       ) : null}

@@ -15,6 +15,7 @@ interface MainScreenProps {
   onStepSelect: (step: FlowStep) => void;
   canOpenPrompt?: boolean;
   canOpenPayment?: boolean;
+  canOpenQuality?: boolean;
 }
 
 export const MainScreen: FC<MainScreenProps> = ({
@@ -23,6 +24,7 @@ export const MainScreen: FC<MainScreenProps> = ({
   onStepSelect,
   canOpenPrompt,
   canOpenPayment,
+  canOpenQuality,
 }) => {
   return (
     <>
@@ -33,6 +35,7 @@ export const MainScreen: FC<MainScreenProps> = ({
         onStepSelect={onStepSelect}
         canOpenPrompt={canOpenPrompt}
         canOpenPayment={canOpenPayment}
+        canOpenQuality={canOpenQuality}
       />
       <Content arrowsIcon={arrowsIcon} />
       <ImageUploadButton onImageSelect={onImageSelect} icon={galleryIcon} />

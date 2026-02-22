@@ -149,6 +149,7 @@ interface PromptScreenProps {
   onStepSelect: (step: FlowStep) => void;
   canOpenPrompt?: boolean;
   canOpenPayment?: boolean;
+  canOpenQuality?: boolean;
 }
 
 export const PromptScreen: FC<PromptScreenProps> = ({
@@ -159,6 +160,7 @@ export const PromptScreen: FC<PromptScreenProps> = ({
   onStepSelect,
   canOpenPrompt,
   canOpenPayment,
+  canOpenQuality,
 }) => {
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     onPromptChange(e.target.value);
@@ -172,6 +174,7 @@ export const PromptScreen: FC<PromptScreenProps> = ({
         onStepSelect={onStepSelect}
         canOpenPrompt={canOpenPrompt}
         canOpenPayment={canOpenPayment}
+        canOpenQuality={canOpenQuality}
       />
       <BackgroundLayer>
         <PhoneTop src={phoneTop} alt="" />

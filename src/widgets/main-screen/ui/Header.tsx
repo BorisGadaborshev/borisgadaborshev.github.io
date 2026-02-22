@@ -28,6 +28,7 @@ interface HeaderProps {
   onStepSelect: (step: FlowStep) => void;
   canOpenPrompt?: boolean;
   canOpenPayment?: boolean;
+  canOpenQuality?: boolean;
 }
 
 export const Header: FC<HeaderProps> = ({
@@ -36,6 +37,7 @@ export const Header: FC<HeaderProps> = ({
   onStepSelect,
   canOpenPrompt,
   canOpenPayment,
+  canOpenQuality,
 }) => {
   return (
     <>
@@ -45,6 +47,7 @@ export const Header: FC<HeaderProps> = ({
         onStepSelect={onStepSelect}
         canOpenPrompt={canOpenPrompt}
         canOpenPayment={canOpenPayment}
+        canOpenQuality={canOpenQuality}
       />
       <FeaturesPreview />
     </>
