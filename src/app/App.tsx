@@ -15,6 +15,9 @@ import { AppProviders } from './providers';
 
 const APP_MODE = import.meta.env.VITE_APP_MODE === 'prompt-check' ? 'prompt-check' : 'livpic';
 const IS_PROMPT_CHECK_MODE = APP_MODE === 'prompt-check';
+const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
+const apiUrl = (path: string) => (API_BASE_URL ? `${API_BASE_URL}${path}` : path);
 
 const ScreenStack = styled.div`
   position: absolute;
@@ -133,10 +136,17 @@ export const App: FC = () => {
         : 'select';
 
   const startPayment = async () => {
+    if (!API_BASE_URL && window.location.hostname.endsWith('github.io')) {
+      setPaymentError(
+        'Не задан VITE_API_BASE_URL. Для GitHub Pages укажите URL backend-сервера.',
+      );
+      return;
+    }
+
     setCreatingPayment(true);
     setPaymentError(null);
     try {
-      const resp = await fetch('/api/yookassa/create-payment', {
+      const resp = await fetch(apiUrl('/api/yookassa/create-payment'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -219,10 +229,17 @@ export const App: FC = () => {
       return;
     }
 
+    if (!API_BASE_URL && window.location.hostname.endsWith('github.io')) {
+      setQualityError(
+        'Не задан VITE_API_BASE_URL. Для GitHub Pages укажите URL backend-сервера.',
+      );
+      return;
+    }
+
     setQualityLoading(true);
     setQualityError(null);
     try {
-      const resp = await fetch('/api/prompt-quality/analyze', {
+      const resp = await fetch(apiUrl('/api/prompt-quality/analyze'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: trimmed }),
