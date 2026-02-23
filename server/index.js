@@ -79,7 +79,13 @@ function extractJsonPayload(rawContent) {
 }
 
 app.get('/api/health', (_req, res) => {
-  json(res, 200, { ok: true });
+  json(res, 200, {
+    ok: true,
+    llmConfigured: Boolean(process.env.LLM_API_KEY),
+    llmUrlConfigured: Boolean(process.env.LLM_API_URL),
+    llmModelConfigured: Boolean(process.env.LLM_MODEL),
+    yooKassaConfigured: Boolean(process.env.YOOKASSA_SHOP_ID && process.env.YOOKASSA_SECRET_KEY),
+  });
 });
 
 app.get('/', (_req, res) => {
