@@ -1,7 +1,7 @@
-import 'dotenv/config';
-import crypto from 'node:crypto';
-import express from 'express';
-import cors from 'cors';
+require('dotenv/config');
+const crypto = require('node:crypto');
+const express = require('express');
+const cors = require('cors');
 
 const app = express();
 
