@@ -209,6 +209,9 @@ export const PromptQualityResultScreen: FC<PromptQualityResultScreenProps> = ({
   canOpenQuality,
 }) => {
   const score = Math.max(0, Math.min(100, Math.round(result.score)));
+  const progressRadius = 66;
+  const progressCircumference = 2 * Math.PI * progressRadius;
+  const progressOffset = progressCircumference * (1 - score / 100);
 
   return (
     <Root>
@@ -264,9 +267,17 @@ export const PromptQualityResultScreen: FC<PromptQualityResultScreenProps> = ({
           <g filter="url(#scoreFilter2)">
             <circle cx="180.831" cy="180.831" r="66" fill="#202E96" />
           </g>
-          <path
-            d="M183.387 248.666C183.475 250.328 182.199 251.753 180.535 251.77C164.161 251.936 148.21 246.349 135.495 235.929C122.78 225.51 114.167 210.968 111.111 194.881C110.801 193.246 111.948 191.715 113.595 191.475C115.242 191.235 116.764 192.377 117.081 194.011C119.915 208.611 127.763 221.802 139.315 231.268C150.867 240.734 165.342 245.836 180.215 245.746C181.879 245.736 183.298 247.004 183.387 248.666Z"
-            fill="#FDFDFD"
+          <circle
+            cx="180.831"
+            cy="180.831"
+            r={progressRadius}
+            fill="none"
+            stroke="#FDFDFD"
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeDasharray={progressCircumference}
+            strokeDashoffset={progressOffset}
+            transform="rotate(-90 180.831 180.831)"
           />
           <defs>
             <filter

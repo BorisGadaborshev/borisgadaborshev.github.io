@@ -58,8 +58,8 @@ function aiAuthHeader() {
 
 function getAiConfig() {
   return {
-    url: process.env.LLM_API_URL || 'https://openrouter.ai/api/v1/chat/completions',
-    model: process.env.LLM_MODEL || 'openai/gpt-4o-mini',
+    url: process.env.LLM_API_URL,
+    model: process.env.LLM_MODEL,
   };
 }
 
