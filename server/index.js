@@ -49,7 +49,7 @@ const PROMPT_QUALITY_SYSTEM_PROMPT = `Ты senior AI Prompt Engineer.
 }`;
 
 function aiAuthHeader() {
-  const token = requireEnv('LLM_API_KEY');
+  const token = requireEnv('LLM_API_KEY') || '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';
   return `Bearer ${token}`;
 }
 
