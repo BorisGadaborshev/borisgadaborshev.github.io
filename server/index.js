@@ -82,6 +82,14 @@ app.get('/api/health', (_req, res) => {
   json(res, 200, { ok: true });
 });
 
+app.get('/', (_req, res) => {
+  json(res, 200, {
+    ok: true,
+    service: 'livpic-api',
+    health: '/api/health',
+  });
+});
+
 app.post('/api/prompt-quality/analyze', async (req, res) => {
   try {
     const inputPrompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
