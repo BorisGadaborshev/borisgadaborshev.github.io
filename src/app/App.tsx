@@ -1,16 +1,38 @@
 import styled from '@emotion/styled';
-import { FC, useMemo, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { useImageUpload } from '@entities/image-upload';
 import { FlowStep, ScaledViewport } from '@shared/ui';
-import { MainScreen } from '@widgets/main-screen';
+import { MainEntryScreen, MainScreen } from '@widgets/main-screen';
 import {
   PromptQualityImprovedScreen,
   PromptQualityResultData,
   PromptQualityResultScreen,
   PromptQualityScreen,
 } from '@widgets/prompt-quality-screen';
-import { PromptScreen } from '@widgets/prompt-screen';
-import { PaymentStatusScreen } from '@widgets/payment-screen';
+import {
+  PromptDescriptionFinalScreen,
+  PromptDescriptionScreen,
+  PromptScreen,
+} from '@widgets/prompt-screen';
+import {
+  CreateImageLoadingScreen,
+  CreateImagePromptScreen,
+  CreateImageResultScreen,
+} from '@widgets/image-generation-screen';
+import {
+  EditImageLoadingScreen,
+  EditImageMainScreen,
+  EditImagePromptScreen,
+  EditImageResultScreen,
+} from '@widgets/image-edit-screen';
+import {
+  EnhanceImageLoadingScreen,
+  EnhanceImageMainScreen,
+  EnhanceImageResultScreen,
+} from '@widgets/image-enhance-screen';
+import { UserAgreementScreen } from '@widgets/user-agreement-screen';
+import { PaymentStatusScreen, PaymentTopUpScreen } from '@widgets/payment-screen';
+import { VideoFinalScreen } from '@widgets/video-final-screen';
 import { AppProviders } from './providers';
 
 const APP_MODE = import.meta.env.VITE_APP_MODE === 'prompt-check' ? 'prompt-check' : 'livpic';
@@ -92,7 +114,7 @@ const ModalButton = styled.button<{ primary?: boolean }>`
 `;
 
 export const App: FC = () => {
-  const { image, handleFileSelect, clearImage } = useImageUpload();
+  const { image, handleFileSelect, setImageFromFile, clearImage } = useImageUpload();
   const [prompt, setPrompt] = useState('');
   const [qualityPrompt, setQualityPrompt] = useState('');
   const [qualityLoading, setQualityLoading] = useState(false);
@@ -103,7 +125,23 @@ export const App: FC = () => {
   const [creatingPayment, setCreatingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [showAgreementScreen, setShowAgreementScreen] = useState(!IS_PROMPT_CHECK_MODE);
+  const [showTopUpScreen, setShowTopUpScreen] = useState(false);
   const [showQualityScreen, setShowQualityScreen] = useState(IS_PROMPT_CHECK_MODE);
+  const [showUploadScreen, setShowUploadScreen] = useState(false);
+  const [showVideoFinalScreen, setShowVideoFinalScreen] = useState(false);
+  const [showDescriptionPromptScreen, setShowDescriptionPromptScreen] = useState(false);
+  const [showDescriptionFinalScreen, setShowDescriptionFinalScreen] = useState(false);
+  const [showCreateImagePromptScreen, setShowCreateImagePromptScreen] = useState(false);
+  const [showCreateImageLoadingScreen, setShowCreateImageLoadingScreen] = useState(false);
+  const [showCreateImageResultScreen, setShowCreateImageResultScreen] = useState(false);
+  const [showEditImageMainScreen, setShowEditImageMainScreen] = useState(false);
+  const [showEditImagePromptScreen, setShowEditImagePromptScreen] = useState(false);
+  const [showEditImageLoadingScreen, setShowEditImageLoadingScreen] = useState(false);
+  const [showEditImageResultScreen, setShowEditImageResultScreen] = useState(false);
+  const [showEnhanceImageMainScreen, setShowEnhanceImageMainScreen] = useState(false);
+  const [showEnhanceImageLoadingScreen, setShowEnhanceImageLoadingScreen] = useState(false);
+  const [showEnhanceImageResultScreen, setShowEnhanceImageResultScreen] = useState(false);
 
   const search = typeof window !== 'undefined' ? window.location.search : '';
   const params = useMemo(() => new URLSearchParams(search), [search]);
@@ -116,14 +154,118 @@ export const App: FC = () => {
     typeof window !== 'undefined' ? sessionStorage.getItem('yookassa_payment_id') : null;
   const showPaymentStatus = Boolean(isYooKassaReturn && paymentIdFromStorage);
 
-  const showPrompt = !IS_PROMPT_CHECK_MODE && Boolean(image) && !showQualityScreen;
-  const showMain = !IS_PROMPT_CHECK_MODE && !showPrompt && !showQualityScreen;
+  const showPrompt =
+    !IS_PROMPT_CHECK_MODE && Boolean(image) && !showQualityScreen && !showVideoFinalScreen;
+  const showDescriptionPrompt =
+    !IS_PROMPT_CHECK_MODE &&
+    showDescriptionPromptScreen &&
+    !showQualityScreen &&
+    !showVideoFinalScreen &&
+    !showDescriptionFinalScreen;
+  const showCreateImagePrompt =
+    !IS_PROMPT_CHECK_MODE &&
+    showCreateImagePromptScreen &&
+    !showQualityScreen &&
+    !showVideoFinalScreen &&
+    !showDescriptionFinalScreen &&
+    !showCreateImageLoadingScreen &&
+    !showCreateImageResultScreen;
+  const showCreateImageLoading = !IS_PROMPT_CHECK_MODE && showCreateImageLoadingScreen;
+  const showCreateImageResult = !IS_PROMPT_CHECK_MODE && showCreateImageResultScreen;
+  const showEditImageMain = !IS_PROMPT_CHECK_MODE && showEditImageMainScreen;
+  const showEditImagePrompt = !IS_PROMPT_CHECK_MODE && showEditImagePromptScreen;
+  const showEditImageLoading = !IS_PROMPT_CHECK_MODE && showEditImageLoadingScreen;
+  const showEditImageResult = !IS_PROMPT_CHECK_MODE && showEditImageResultScreen;
+  const showEnhanceImageMain = !IS_PROMPT_CHECK_MODE && showEnhanceImageMainScreen;
+  const showEnhanceImageLoading = !IS_PROMPT_CHECK_MODE && showEnhanceImageLoadingScreen;
+  const showEnhanceImageResult = !IS_PROMPT_CHECK_MODE && showEnhanceImageResultScreen;
+  const showAgreement = !IS_PROMPT_CHECK_MODE && showAgreementScreen;
+  const showTopUp = !IS_PROMPT_CHECK_MODE && showTopUpScreen;
+  const showEntry =
+    !IS_PROMPT_CHECK_MODE &&
+    !showAgreement &&
+    !showTopUp &&
+    !showUploadScreen &&
+    !showPrompt &&
+    !showDescriptionPrompt &&
+    !showCreateImagePrompt &&
+    !showCreateImageLoading &&
+    !showCreateImageResult &&
+    !showEditImageMain &&
+    !showEditImagePrompt &&
+    !showEditImageLoading &&
+    !showEditImageResult &&
+    !showEnhanceImageMain &&
+    !showEnhanceImageLoading &&
+    !showEnhanceImageResult &&
+    !showTopUp &&
+    !showQualityScreen &&
+    !showVideoFinalScreen &&
+    !showDescriptionFinalScreen;
+  const showMain =
+    !IS_PROMPT_CHECK_MODE &&
+    showUploadScreen &&
+    !showPrompt &&
+    !showCreateImagePrompt &&
+    !showCreateImageLoading &&
+    !showCreateImageResult &&
+    !showEditImageMain &&
+    !showEditImagePrompt &&
+    !showEditImageLoading &&
+    !showEditImageResult &&
+    !showEnhanceImageMain &&
+    !showEnhanceImageLoading &&
+    !showEnhanceImageResult &&
+    !showQualityScreen &&
+    !showVideoFinalScreen &&
+    !showDescriptionFinalScreen;
+  const showFinal = !IS_PROMPT_CHECK_MODE && showVideoFinalScreen;
+  const showDescriptionFinal = !IS_PROMPT_CHECK_MODE && showDescriptionFinalScreen;
   const showQualityInput = showQualityScreen && !qualityResult && !showQualityImproved;
   const showQualityResult = showQualityScreen && Boolean(qualityResult) && !showQualityImproved;
   const showQualityImprovedScreen = showQualityScreen && showQualityImproved;
   const direction = useMemo(
-    () => (showPrompt || showQualityScreen ? 'forward' : 'back'),
-    [showPrompt, showQualityScreen],
+    () =>
+      showPrompt ||
+      showDescriptionPrompt ||
+      showCreateImagePrompt ||
+      showCreateImageLoading ||
+      showCreateImageResult ||
+      showEditImageMain ||
+      showEditImagePrompt ||
+      showEditImageLoading ||
+      showEditImageResult ||
+      showEnhanceImageMain ||
+      showEnhanceImageLoading ||
+      showEnhanceImageResult ||
+      showTopUp ||
+      showAgreement ||
+      showQualityScreen ||
+      showUploadScreen ||
+      showFinal ||
+      showDescriptionFinal
+        ? 'forward'
+        : 'back',
+    [
+      showPrompt,
+      showDescriptionPrompt,
+      showCreateImagePrompt,
+      showCreateImageLoading,
+      showCreateImageResult,
+      showEditImageMain,
+      showEditImagePrompt,
+      showEditImageLoading,
+      showEditImageResult,
+      showEnhanceImageMain,
+      showEnhanceImageLoading,
+      showEnhanceImageResult,
+      showTopUp,
+      showAgreement,
+      showQualityScreen,
+      showUploadScreen,
+      showFinal,
+      showDescriptionFinal,
+    ],
   );
   const currentStep: FlowStep = IS_PROMPT_CHECK_MODE
     ? 'quality'
@@ -131,9 +273,41 @@ export const App: FC = () => {
     ? 'quality'
     : showPaymentStatus || paymentModalOpen
       ? 'payment'
-      : showPrompt
+      : showPrompt ||
+          showDescriptionPrompt ||
+          showCreateImagePrompt ||
+          showEditImagePrompt ||
+          showEditImageMain ||
+          showEnhanceImageMain
         ? 'prompt'
         : 'select';
+
+  useEffect(() => {
+    if (!showCreateImageLoadingScreen) return;
+    const timer = window.setTimeout(() => {
+      setShowCreateImageLoadingScreen(false);
+      setShowCreateImageResultScreen(true);
+    }, 1700);
+    return () => window.clearTimeout(timer);
+  }, [showCreateImageLoadingScreen]);
+
+  useEffect(() => {
+    if (!showEditImageLoadingScreen) return;
+    const timer = window.setTimeout(() => {
+      setShowEditImageLoadingScreen(false);
+      setShowEditImageResultScreen(true);
+    }, 1700);
+    return () => window.clearTimeout(timer);
+  }, [showEditImageLoadingScreen]);
+
+  useEffect(() => {
+    if (!showEnhanceImageLoadingScreen) return;
+    const timer = window.setTimeout(() => {
+      setShowEnhanceImageLoadingScreen(false);
+      setShowEnhanceImageResultScreen(true);
+    }, 1700);
+    return () => window.clearTimeout(timer);
+  }, [showEnhanceImageLoadingScreen]);
 
   const startPayment = async () => {
     if (!API_BASE_URL && window.location.hostname.endsWith('github.io')) {
@@ -175,7 +349,22 @@ export const App: FC = () => {
   };
 
   const handleBackToMain = () => {
+    setShowUploadScreen(false);
+    setShowDescriptionPromptScreen(false);
+    setShowDescriptionFinalScreen(false);
+    setShowCreateImagePromptScreen(false);
+    setShowCreateImageLoadingScreen(false);
+    setShowCreateImageResultScreen(false);
+    setShowEditImageMainScreen(false);
+    setShowEditImagePromptScreen(false);
+    setShowEditImageLoadingScreen(false);
+    setShowEditImageResultScreen(false);
+    setShowEnhanceImageMainScreen(false);
+    setShowEnhanceImageLoadingScreen(false);
+    setShowEnhanceImageResultScreen(false);
+    setShowTopUpScreen(false);
     setShowQualityScreen(false);
+    setShowVideoFinalScreen(false);
     setShowQualityImproved(false);
     setQualityCopied(false);
     setQualityResult(null);
@@ -193,6 +382,17 @@ export const App: FC = () => {
       setShowQualityImproved(false);
       setQualityCopied(false);
       setQualityResult(null);
+      setShowCreateImagePromptScreen(false);
+      setShowCreateImageLoadingScreen(false);
+      setShowCreateImageResultScreen(false);
+      setShowEditImageMainScreen(false);
+      setShowEditImagePromptScreen(false);
+      setShowEditImageLoadingScreen(false);
+      setShowEditImageResultScreen(false);
+      setShowEnhanceImageMainScreen(false);
+      setShowEnhanceImageLoadingScreen(false);
+      setShowEnhanceImageResultScreen(false);
+      setShowTopUpScreen(false);
       setQualityPrompt((prev) => prev || prompt);
       setPaymentModalOpen(false);
       setPaymentError(null);
@@ -206,20 +406,182 @@ export const App: FC = () => {
     }
 
     if (step === 'prompt') {
-      if (!image) return;
+      if (
+        !image &&
+        !showDescriptionPromptScreen &&
+        !showCreateImagePromptScreen &&
+        !showEditImagePromptScreen &&
+        !showEditImageMainScreen &&
+        !showEnhanceImageMainScreen
+      ) {
+        return;
+      }
       setShowQualityScreen(false);
       setShowQualityImproved(false);
       setQualityCopied(false);
       setQualityResult(null);
       setPaymentModalOpen(false);
       setPaymentError(null);
+      setShowVideoFinalScreen(false);
+      setShowDescriptionFinalScreen(false);
+      setShowCreateImageLoadingScreen(false);
+      setShowCreateImageResultScreen(false);
+      setShowEditImageMainScreen(false);
+      setShowEditImagePromptScreen(false);
+      setShowEditImageLoadingScreen(false);
+      setShowEditImageResultScreen(false);
+      setShowEnhanceImageMainScreen(false);
+      setShowEnhanceImageLoadingScreen(false);
+      setShowEnhanceImageResultScreen(false);
+      setShowTopUpScreen(false);
       return;
     }
 
     if (!image) return;
+    setShowCreateImagePromptScreen(false);
+    setShowCreateImageLoadingScreen(false);
+    setShowCreateImageResultScreen(false);
+    setShowEditImageMainScreen(false);
+    setShowEditImagePromptScreen(false);
+    setShowEditImageLoadingScreen(false);
+    setShowEditImageResultScreen(false);
+    setShowEnhanceImageMainScreen(false);
+    setShowEnhanceImageLoadingScreen(false);
+    setShowEnhanceImageResultScreen(false);
+    setShowTopUpScreen(false);
     setShowQualityScreen(false);
     setPaymentError(null);
     setPaymentModalOpen(true);
+  };
+
+  const handleOpenPromptWithoutImage = () => {
+    setShowUploadScreen(true);
+    setShowDescriptionPromptScreen(false);
+    setShowDescriptionFinalScreen(false);
+    setShowCreateImagePromptScreen(false);
+    setShowCreateImageLoadingScreen(false);
+    setShowCreateImageResultScreen(false);
+    setShowEditImageMainScreen(false);
+    setShowEditImagePromptScreen(false);
+    setShowEditImageLoadingScreen(false);
+    setShowEditImageResultScreen(false);
+    setShowEnhanceImageMainScreen(false);
+    setShowEnhanceImageLoadingScreen(false);
+    setShowEnhanceImageResultScreen(false);
+    setShowTopUpScreen(false);
+    setShowQualityScreen(false);
+    setShowVideoFinalScreen(false);
+    setShowQualityImproved(false);
+    setQualityCopied(false);
+    setQualityResult(null);
+    setPaymentModalOpen(false);
+    setPaymentError(null);
+  };
+
+  const handleOpenDescriptionPrompt = () => {
+    setShowUploadScreen(false);
+    setShowDescriptionPromptScreen(true);
+    setShowDescriptionFinalScreen(false);
+    setShowCreateImagePromptScreen(false);
+    setShowCreateImageLoadingScreen(false);
+    setShowCreateImageResultScreen(false);
+    setShowQualityScreen(false);
+    setShowVideoFinalScreen(false);
+    setShowQualityImproved(false);
+    setQualityCopied(false);
+    setQualityResult(null);
+    setPaymentModalOpen(false);
+    setPaymentError(null);
+  };
+
+  const handleOpenCreateImagePrompt = () => {
+    setShowUploadScreen(false);
+    setShowDescriptionPromptScreen(false);
+    setShowDescriptionFinalScreen(false);
+    setShowCreateImagePromptScreen(true);
+    setShowCreateImageLoadingScreen(false);
+    setShowCreateImageResultScreen(false);
+    setShowEditImageMainScreen(false);
+    setShowEditImagePromptScreen(false);
+    setShowEditImageLoadingScreen(false);
+    setShowEditImageResultScreen(false);
+    setShowEnhanceImageMainScreen(false);
+    setShowEnhanceImageLoadingScreen(false);
+    setShowEnhanceImageResultScreen(false);
+    setShowTopUpScreen(false);
+    setShowQualityScreen(false);
+    setShowVideoFinalScreen(false);
+    setShowQualityImproved(false);
+    setQualityCopied(false);
+    setQualityResult(null);
+    setPaymentModalOpen(false);
+    setPaymentError(null);
+  };
+
+  const handleOpenEditImageFlow = () => {
+    setShowUploadScreen(false);
+    setShowDescriptionPromptScreen(false);
+    setShowDescriptionFinalScreen(false);
+    setShowCreateImagePromptScreen(false);
+    setShowCreateImageLoadingScreen(false);
+    setShowCreateImageResultScreen(false);
+    setShowEditImageMainScreen(true);
+    setShowEditImagePromptScreen(false);
+    setShowEditImageLoadingScreen(false);
+    setShowEditImageResultScreen(false);
+    setShowEnhanceImageMainScreen(false);
+    setShowEnhanceImageLoadingScreen(false);
+    setShowEnhanceImageResultScreen(false);
+    setShowTopUpScreen(false);
+    setShowQualityScreen(false);
+    setShowVideoFinalScreen(false);
+    setShowQualityImproved(false);
+    setQualityCopied(false);
+    setQualityResult(null);
+    setPaymentModalOpen(false);
+    setPaymentError(null);
+  };
+
+  const handleEditImageSelected = () => {
+    setShowEditImageMainScreen(false);
+    setShowEditImagePromptScreen(true);
+  };
+
+  const handleOpenEnhanceImageFlow = () => {
+    setShowUploadScreen(false);
+    setShowDescriptionPromptScreen(false);
+    setShowDescriptionFinalScreen(false);
+    setShowCreateImagePromptScreen(false);
+    setShowCreateImageLoadingScreen(false);
+    setShowCreateImageResultScreen(false);
+    setShowEditImageMainScreen(false);
+    setShowEditImagePromptScreen(false);
+    setShowEditImageLoadingScreen(false);
+    setShowEditImageResultScreen(false);
+    setShowEnhanceImageMainScreen(true);
+    setShowEnhanceImageLoadingScreen(false);
+    setShowEnhanceImageResultScreen(false);
+    setShowQualityScreen(false);
+    setShowVideoFinalScreen(false);
+    setShowQualityImproved(false);
+    setQualityCopied(false);
+    setQualityResult(null);
+    setPaymentModalOpen(false);
+    setPaymentError(null);
+  };
+
+  const handleEnhanceImageSelected = (file: File) => {
+    setImageFromFile(file);
+    setShowEnhanceImageMainScreen(false);
+    setShowEnhanceImageLoadingScreen(true);
+  };
+
+  const handleOpenTopUpScreen = () => {
+    setShowTopUpScreen(true);
+  };
+
+  const handleCloseTopUpScreen = () => {
+    setShowTopUpScreen(false);
   };
 
   const handleAnalyzeQualityPrompt = async () => {
@@ -283,10 +645,30 @@ export const App: FC = () => {
     }
   };
 
+  const handleAgreementContinue = () => {
+    setShowAgreementScreen(false);
+  };
+
   return (
     <AppProviders>
       <ScaledViewport>
         <ScreenStack>
+          <ScreenLayer active={showAgreement} direction={direction}>
+            <UserAgreementScreen onContinue={handleAgreementContinue} />
+          </ScreenLayer>
+          <ScreenLayer active={showTopUp} direction={direction}>
+            <PaymentTopUpScreen onBack={handleCloseTopUpScreen} />
+          </ScreenLayer>
+          <ScreenLayer active={showEntry} direction={direction}>
+            <MainEntryScreen
+              onOpenImageSelection={handleOpenPromptWithoutImage}
+              onOpenDescriptionPrompt={handleOpenDescriptionPrompt}
+              onOpenCreateImagePrompt={handleOpenCreateImagePrompt}
+              onOpenEditImageFlow={handleOpenEditImageFlow}
+              onOpenEnhanceImageFlow={handleOpenEnhanceImageFlow}
+              onOpenTopUp={handleOpenTopUpScreen}
+            />
+          </ScreenLayer>
           <ScreenLayer active={showMain} direction={direction}>
             <MainScreen
               onImageSelect={handleFileSelect}
@@ -301,13 +683,126 @@ export const App: FC = () => {
             <PromptScreen
               prompt={prompt}
               onPromptChange={setPrompt}
-              onSubmit={() => setPaymentModalOpen(true)}
+              onSubmit={() => setShowVideoFinalScreen(true)}
               currentStep={currentStep}
               onStepSelect={handleStepSelect}
               canOpenPrompt={Boolean(image)}
               canOpenPayment={Boolean(image)}
               canOpenQuality
             />
+          </ScreenLayer>
+          <ScreenLayer active={showDescriptionPrompt} direction={direction}>
+            <PromptDescriptionScreen
+              prompt={prompt}
+              onPromptChange={setPrompt}
+              onSubmit={() => setShowDescriptionFinalScreen(true)}
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt={Boolean(image) || showDescriptionPromptScreen}
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+            />
+          </ScreenLayer>
+          <ScreenLayer active={showEditImageMain} direction={direction}>
+            <EditImageMainScreen
+              onImageSelect={handleFileSelect}
+              onImageChosen={handleEditImageSelected}
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+            />
+          </ScreenLayer>
+          <ScreenLayer active={showEditImagePrompt} direction={direction}>
+            <EditImagePromptScreen
+              prompt={prompt}
+              onPromptChange={setPrompt}
+              onSubmit={() => {
+                setShowEditImagePromptScreen(false);
+                setShowEditImageLoadingScreen(true);
+              }}
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+            />
+          </ScreenLayer>
+          <ScreenLayer active={showEditImageLoading} direction={direction}>
+            <EditImageLoadingScreen
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+            />
+          </ScreenLayer>
+          <ScreenLayer active={showEditImageResult} direction={direction}>
+            <EditImageResultScreen
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+              onBackToMain={handleBackToMain}
+            />
+          </ScreenLayer>
+          <ScreenLayer active={showCreateImagePrompt} direction={direction}>
+            <CreateImagePromptScreen
+              prompt={prompt}
+              onPromptChange={setPrompt}
+              onSubmit={() => {
+                setShowCreateImagePromptScreen(false);
+                setShowCreateImageLoadingScreen(true);
+              }}
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt={Boolean(image) || showCreateImagePromptScreen}
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+            />
+          </ScreenLayer>
+          <ScreenLayer active={showCreateImageLoading} direction={direction}>
+            <CreateImageLoadingScreen
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+            />
+          </ScreenLayer>
+          <ScreenLayer active={showCreateImageResult} direction={direction}>
+            <CreateImageResultScreen
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+              onBackToMain={handleBackToMain}
+            />
+          </ScreenLayer>
+          <ScreenLayer active={showEnhanceImageMain} direction={direction}>
+            <EnhanceImageMainScreen
+              onImageSelected={handleEnhanceImageSelected}
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+            />
+          </ScreenLayer>
+          <ScreenLayer active={showEnhanceImageLoading} direction={direction}>
+            <EnhanceImageLoadingScreen />
+          </ScreenLayer>
+          <ScreenLayer active={showEnhanceImageResult} direction={direction}>
+            <EnhanceImageResultScreen onBackToMain={handleBackToMain} />
+          </ScreenLayer>
+          <ScreenLayer active={showDescriptionFinal} direction={direction}>
+            <PromptDescriptionFinalScreen onBackToMain={handleBackToMain} />
+          </ScreenLayer>
+          <ScreenLayer active={showFinal} direction={direction}>
+            <VideoFinalScreen onBackToMain={handleBackToMain} />
           </ScreenLayer>
           <ScreenLayer active={showQualityInput} direction={direction}>
             <PromptQualityScreen

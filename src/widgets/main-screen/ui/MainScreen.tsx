@@ -19,7 +19,7 @@ interface MainScreenProps {
 }
 
 export const MainScreen: FC<MainScreenProps> = ({
-  onImageSelect,
+  onImageSelect: _onImageSelect,
   currentStep,
   onStepSelect,
   canOpenPrompt,
@@ -38,7 +38,7 @@ export const MainScreen: FC<MainScreenProps> = ({
         canOpenQuality={canOpenQuality}
       />
       <Content arrowsIcon={arrowsIcon} />
-      <ImageUploadButton onImageSelect={onImageSelect} icon={galleryIcon} />
+      <ImageUploadButton onImageSelect={_onImageSelect} icon={galleryIcon} />
     </>
   );
 };

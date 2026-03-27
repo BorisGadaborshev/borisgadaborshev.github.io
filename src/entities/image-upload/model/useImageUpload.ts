@@ -4,14 +4,14 @@ import { ImageFile } from '@shared/types';
 interface UseImageUploadReturn {
   image: ImageFile | null;
   handleFileSelect: (event: ChangeEvent<HTMLInputElement>) => void;
+  setImageFromFile: (file: File) => void;
   clearImage: () => void;
 }
 
 export const useImageUpload = (): UseImageUploadReturn => {
   const [image, setImage] = useState<ImageFile | null>(null);
 
-  const handleFileSelect = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const setImageFromFile = useCallback((file: File) => {
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -22,6 +22,15 @@ export const useImageUpload = (): UseImageUploadReturn => {
     }
   }, []);
 
+  const handleFileSelect = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      setImageFromFile(file);
+    },
+    [setImageFromFile],
+  );
+
   const clearImage = useCallback(() => {
     setImage(null);
   }, []);
@@ -29,6 +38,7 @@ export const useImageUpload = (): UseImageUploadReturn => {
   return {
     image,
     handleFileSelect,
+    setImageFromFile,
     clearImage,
   };
 };
