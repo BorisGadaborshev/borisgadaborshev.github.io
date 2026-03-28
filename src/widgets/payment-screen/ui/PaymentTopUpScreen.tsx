@@ -31,7 +31,7 @@ const Root = styled.div`
 const Scroll = styled.div`
   height: 100%;
   overflow: auto;
-  padding: 48px 36px 28px;
+  padding: 48px 36px calc(28px + env(safe-area-inset-bottom, 0px));
   scrollbar-width: thin;
 `;
 

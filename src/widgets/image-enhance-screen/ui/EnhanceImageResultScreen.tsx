@@ -2,9 +2,7 @@ import { FC } from 'react';
 import styled from '@emotion/styled';
 
 const BG_TOP = `${import.meta.env.BASE_URL}images/svetPurpleTop.png`;
-const BG_BOTTOM = `${import.meta.env.BASE_URL}images/sverPurpleBottom.png`;
-const BG_BOTTOM_FALLBACK = `${import.meta.env.BASE_URL}images/svetPurpleBottom.png`;
-const STATUS_BAR = `${import.meta.env.BASE_URL}images/main-statusbar.png`;
+const BG_BOTTOM = `${import.meta.env.BASE_URL}images/svetPurpleBottom.png`;
 const MENU_ICON = `${import.meta.env.BASE_URL}images/main-menu-icon.svg`;
 const BALANCE_ICON = `${import.meta.env.BASE_URL}images/main-balance-icon.svg`;
 const BUTTON_BG = `${import.meta.env.BASE_URL}images/video-final-button-bg.svg`;
@@ -43,19 +41,14 @@ const Content = styled.div`
   position: relative;
   z-index: 2;
   min-height: 100%;
-  padding: 12px 20px 28px;
+  padding: 12px 20px calc(20px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   align-items: center;
 `;
 
-const StatusBar = styled.img`
-  width: 100%;
-  margin-top: 2px;
-`;
-
 const Header = styled.div`
-  margin-top: 12px;
+  margin-top: 14px;
   width: 100%;
   display: flex;
   align-items: center;
@@ -164,15 +157,8 @@ const BackButton = styled.button`
 export const EnhanceImageResultScreen: FC<EnhanceImageResultScreenProps> = ({ onBackToMain }) => (
   <Root>
     <TopLight src={BG_TOP} alt="" />
-    <BottomLight
-      src={BG_BOTTOM}
-      alt=""
-      onError={(event) => {
-        event.currentTarget.src = BG_BOTTOM_FALLBACK;
-      }}
-    />
+    <BottomLight src={BG_BOTTOM} alt="" />
     <Content>
-      {/* <StatusBar src={STATUS_BAR} alt="" /> */}
       <Header>
         <MenuButton type="button" aria-label="menu">
           <MenuIcon src={MENU_ICON} alt="" />

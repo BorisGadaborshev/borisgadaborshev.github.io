@@ -2,9 +2,7 @@ import { FC } from 'react';
 import styled from '@emotion/styled';
 
 const BG_TOP = `${import.meta.env.BASE_URL}images/svetPurpleTop.png`;
-const BG_BOTTOM = `${import.meta.env.BASE_URL}images/sverPurpleBottom.png`;
-const BG_BOTTOM_FALLBACK = `${import.meta.env.BASE_URL}images/svetPurpleBottom.png`;
-const STATUS_BAR = `${import.meta.env.BASE_URL}images/main-statusbar.png`;
+const BG_BOTTOM = `${import.meta.env.BASE_URL}images/svetPurpleBottom.png`;
 const MENU_ICON = `${import.meta.env.BASE_URL}images/main-menu-icon.svg`;
 const BALANCE_ICON = `${import.meta.env.BASE_URL}images/main-balance-icon.svg`;
 
@@ -44,13 +42,8 @@ const Content = styled.div`
   align-items: center;
 `;
 
-const StatusBar = styled.img`
-  width: 100%;
-  margin-top: 2px;
-`;
-
 const Header = styled.div`
-  margin-top: 12px;
+  margin-top: 14px;
   width: 100%;
   display: flex;
   align-items: center;
@@ -91,34 +84,8 @@ const BalanceIcon = styled.img`
   height: 16px;
 `;
 
-const DecorLineTop = styled.div`
-  position: absolute;
-  left: -74px;
-  top: 190px;
-  width: 188px;
-  height: 188px;
-  border: 1px solid rgba(255, 255, 255, 0.36);
-  border-right: none;
-  border-bottom: none;
-  border-radius: 50%;
-  transform: rotate(-28deg);
-`;
-
-const DecorLineBottom = styled.div`
-  position: absolute;
-  left: -96px;
-  top: 338px;
-  width: 206px;
-  height: 206px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-left: none;
-  border-top: none;
-  border-radius: 50%;
-  transform: rotate(14deg);
-`;
-
 const Title = styled.h2`
-  margin: 110px 0 0;
+  margin: 132px 0 0;
   color: #ffffff;
   text-align: center;
   font-size: 34px;
@@ -178,15 +145,8 @@ const Spinner = styled.div`
 export const EnhanceImageLoadingScreen: FC = () => (
   <Root>
     <TopLight src={BG_TOP} alt="" />
-    <BottomLight
-      src={BG_BOTTOM}
-      alt=""
-      onError={(event) => {
-        event.currentTarget.src = BG_BOTTOM_FALLBACK;
-      }}
-    />
+    <BottomLight src={BG_BOTTOM} alt="" />
     <Content>
-      {/* <StatusBar src={STATUS_BAR} alt="" /> */}
       <Header>
         <MenuButton type="button" aria-label="menu">
           <MenuIcon src={MENU_ICON} alt="" />
@@ -196,8 +156,6 @@ export const EnhanceImageLoadingScreen: FC = () => (
           <span>200</span>
         </Balance>
       </Header>
-      <DecorLineTop />
-      <DecorLineBottom />
       <Title>Улучшаем качество</Title>
       <Subtitle>Происходит чудо!</Subtitle>
       <SpinnerCard>

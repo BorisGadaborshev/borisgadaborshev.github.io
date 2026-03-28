@@ -106,6 +106,30 @@ const OptionCard = styled.button<{ top: number; clickable?: boolean }>`
   cursor: ${({ clickable }) => (clickable ? 'pointer' : 'default')};
 `;
 
+const DisabledOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: rgba(14, 17, 22, 0.58);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+`;
+
+const DisabledText = styled.span`
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1;
+  text-transform: uppercase;
+`;
+
 const CardBg = styled.img`
   position: absolute;
   left: 0;
@@ -182,6 +206,7 @@ interface OptionCardData {
   tokenLeft: number;
   descWidth: number;
   onClick?: () => void;
+  disabled?: boolean;
 }
 
 export const MainEntryScreen: FC<MainEntryScreenProps> = ({
@@ -192,6 +217,10 @@ export const MainEntryScreen: FC<MainEntryScreenProps> = ({
   onOpenEnhanceImageFlow,
   onOpenTopUp,
 }) => {
+  void onOpenDescriptionPrompt;
+  void onOpenCreateImagePrompt;
+  void onOpenEditImageFlow;
+  void onOpenEnhanceImageFlow;
   const options: OptionCardData[] = [
     {
       top: 0,
@@ -213,7 +242,7 @@ export const MainEntryScreen: FC<MainEntryScreenProps> = ({
       tokens: '120 токенов',
       tokenLeft: 250,
       descWidth: 217,
-      onClick: onOpenDescriptionPrompt,
+      disabled: true,
     },
     {
       top: 280,
@@ -224,7 +253,7 @@ export const MainEntryScreen: FC<MainEntryScreenProps> = ({
       tokens: '70 токенов',
       tokenLeft: 259,
       descWidth: 217,
-      onClick: onOpenCreateImagePrompt,
+      disabled: true,
     },
     {
       top: 420,
@@ -235,7 +264,7 @@ export const MainEntryScreen: FC<MainEntryScreenProps> = ({
       tokens: '80 токенов',
       tokenLeft: 259,
       descWidth: 217,
-      onClick: onOpenEditImageFlow,
+      disabled: true,
     },
     {
       top: 560,
@@ -246,7 +275,7 @@ export const MainEntryScreen: FC<MainEntryScreenProps> = ({
       tokens: '75 токенов',
       tokenLeft: 259,
       descWidth: 217,
-      onClick: onOpenEnhanceImageFlow,
+      disabled: true,
     },
   ];
 
@@ -265,14 +294,20 @@ export const MainEntryScreen: FC<MainEntryScreenProps> = ({
             key={option.title}
             type="button"
             top={option.top}
-            clickable={Boolean(option.onClick)}
-            onClick={option.onClick}
+            clickable={Boolean(option.onClick) && !option.disabled}
+            onClick={option.disabled ? undefined : option.onClick}
+            disabled={option.disabled}
           >
             <CardBg src={option.bg} alt="" />
             <CardTitle>{option.title}</CardTitle>
             <CardDivider />
             <CardDescription width={option.descWidth}>{option.description}</CardDescription>
             <CardTokens left={option.tokenLeft}>{option.tokens}</CardTokens>
+            {option.disabled ? (
+              <DisabledOverlay>
+                <DisabledText>В процессе разработки</DisabledText>
+              </DisabledOverlay>
+            ) : null}
           </OptionCard>
         ))}
       </Options>

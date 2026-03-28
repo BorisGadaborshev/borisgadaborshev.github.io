@@ -111,7 +111,7 @@ const Link = styled.a`
 `;
 
 const Controls = styled.div`
-  padding: 8px 35px 20px;
+  padding: 8px 35px calc(20px + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(180deg, rgba(14, 17, 22, 0) 0%, #0e1116 24%);
 `;
 

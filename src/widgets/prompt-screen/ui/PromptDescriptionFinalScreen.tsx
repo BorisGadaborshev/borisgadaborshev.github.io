@@ -148,7 +148,7 @@ const Message = styled.p`
 const BackButton = styled.button`
   position: absolute;
   left: 20px;
-  top: 727px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   width: 353px;
   height: 57px;
   padding: 0;
