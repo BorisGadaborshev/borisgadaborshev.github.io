@@ -1,8 +1,8 @@
 import styled from '@emotion/styled';
-import { FC, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FC, useEffect, useMemo, useRef, useState } from 'react';
 import { useImageUpload } from '@entities/image-upload';
 import { FlowStep, ScaledViewport } from '@shared/ui';
-import { MainEntryScreen, MainScreen } from '@widgets/main-screen';
+import { MainEntryScreen, MainScreen, MainUploadLoadingScreen } from '@widgets/main-screen';
 import {
   PromptQualityImprovedScreen,
   PromptQualityResultData,
@@ -114,7 +114,7 @@ const ModalButton = styled.button<{ primary?: boolean }>`
 `;
 
 export const App: FC = () => {
-  const { image, handleFileSelect, setImageFromFile, clearImage } = useImageUpload();
+  const { image, isLoading, handleFileSelect, setImageFromFile, clearImage } = useImageUpload();
   const [prompt, setPrompt] = useState('');
   const [qualityPrompt, setQualityPrompt] = useState('');
   const [qualityLoading, setQualityLoading] = useState(false);
@@ -129,8 +129,11 @@ export const App: FC = () => {
   const [showTopUpScreen, setShowTopUpScreen] = useState(false);
   const [showQualityScreen, setShowQualityScreen] = useState(IS_PROMPT_CHECK_MODE);
   const [showUploadScreen, setShowUploadScreen] = useState(false);
+  const [showMainUploadDelay, setShowMainUploadDelay] = useState(false);
+  const [showVideoLoadingScreen, setShowVideoLoadingScreen] = useState(false);
   const [showVideoFinalScreen, setShowVideoFinalScreen] = useState(false);
   const [showDescriptionPromptScreen, setShowDescriptionPromptScreen] = useState(false);
+  const [showDescriptionLoadingScreen, setShowDescriptionLoadingScreen] = useState(false);
   const [showDescriptionFinalScreen, setShowDescriptionFinalScreen] = useState(false);
   const [showCreateImagePromptScreen, setShowCreateImagePromptScreen] = useState(false);
   const [showCreateImageLoadingScreen, setShowCreateImageLoadingScreen] = useState(false);
@@ -142,6 +145,7 @@ export const App: FC = () => {
   const [showEnhanceImageMainScreen, setShowEnhanceImageMainScreen] = useState(false);
   const [showEnhanceImageLoadingScreen, setShowEnhanceImageLoadingScreen] = useState(false);
   const [showEnhanceImageResultScreen, setShowEnhanceImageResultScreen] = useState(false);
+  const mainUploadDelayTimerRef = useRef<number | null>(null);
 
   const search = typeof window !== 'undefined' ? window.location.search : '';
   const params = useMemo(() => new URLSearchParams(search), [search]);
@@ -155,12 +159,18 @@ export const App: FC = () => {
   const showPaymentStatus = Boolean(isYooKassaReturn && paymentIdFromStorage);
 
   const showPrompt =
-    !IS_PROMPT_CHECK_MODE && Boolean(image) && !showQualityScreen && !showVideoFinalScreen;
+    !IS_PROMPT_CHECK_MODE &&
+    Boolean(image) &&
+    !showQualityScreen &&
+    !showMainUploadDelay &&
+    !showVideoLoadingScreen &&
+    !showVideoFinalScreen;
   const showDescriptionPrompt =
     !IS_PROMPT_CHECK_MODE &&
     showDescriptionPromptScreen &&
     !showQualityScreen &&
     !showVideoFinalScreen &&
+    !showDescriptionLoadingScreen &&
     !showDescriptionFinalScreen;
   const showCreateImagePrompt =
     !IS_PROMPT_CHECK_MODE &&
@@ -198,6 +208,8 @@ export const App: FC = () => {
     !showEnhanceImageMain &&
     !showEnhanceImageLoading &&
     !showEnhanceImageResult &&
+    !showVideoLoadingScreen &&
+    !showDescriptionLoadingScreen &&
     !showTopUp &&
     !showQualityScreen &&
     !showVideoFinalScreen &&
@@ -205,6 +217,8 @@ export const App: FC = () => {
   const showMain =
     !IS_PROMPT_CHECK_MODE &&
     showUploadScreen &&
+    !isLoading &&
+    !showMainUploadDelay &&
     !showPrompt &&
     !showCreateImagePrompt &&
     !showCreateImageLoading &&
@@ -217,10 +231,16 @@ export const App: FC = () => {
     !showEnhanceImageLoading &&
     !showEnhanceImageResult &&
     !showQualityScreen &&
+    !showVideoLoadingScreen &&
+    !showDescriptionLoadingScreen &&
     !showVideoFinalScreen &&
     !showDescriptionFinalScreen;
   const showFinal = !IS_PROMPT_CHECK_MODE && showVideoFinalScreen;
+  const showVideoLoading = !IS_PROMPT_CHECK_MODE && showVideoLoadingScreen;
+  const showDescriptionLoading = !IS_PROMPT_CHECK_MODE && showDescriptionLoadingScreen;
   const showDescriptionFinal = !IS_PROMPT_CHECK_MODE && showDescriptionFinalScreen;
+  const showMainUploadLoading =
+    !IS_PROMPT_CHECK_MODE && showUploadScreen && (isLoading || showMainUploadDelay);
   const showQualityInput = showQualityScreen && !qualityResult && !showQualityImproved;
   const showQualityResult = showQualityScreen && Boolean(qualityResult) && !showQualityImproved;
   const showQualityImprovedScreen = showQualityScreen && showQualityImproved;
@@ -242,6 +262,9 @@ export const App: FC = () => {
       showAgreement ||
       showQualityScreen ||
       showUploadScreen ||
+      showMainUploadLoading ||
+      showVideoLoading ||
+      showDescriptionLoading ||
       showFinal ||
       showDescriptionFinal
         ? 'forward'
@@ -263,6 +286,9 @@ export const App: FC = () => {
       showAgreement,
       showQualityScreen,
       showUploadScreen,
+      showMainUploadLoading,
+      showVideoLoading,
+      showDescriptionLoading,
       showFinal,
       showDescriptionFinal,
     ],
@@ -275,6 +301,8 @@ export const App: FC = () => {
       ? 'payment'
       : showPrompt ||
           showDescriptionPrompt ||
+          showVideoLoading ||
+          showDescriptionLoading ||
           showCreateImagePrompt ||
           showEditImagePrompt ||
           showEditImageMain ||
@@ -308,6 +336,48 @@ export const App: FC = () => {
     }, 1700);
     return () => window.clearTimeout(timer);
   }, [showEnhanceImageLoadingScreen]);
+
+  useEffect(() => {
+    if (!showVideoLoadingScreen) return;
+    const timer = window.setTimeout(() => {
+      setShowVideoLoadingScreen(false);
+      setShowVideoFinalScreen(true);
+    }, 5000);
+    return () => window.clearTimeout(timer);
+  }, [showVideoLoadingScreen]);
+
+  useEffect(() => {
+    if (!showDescriptionLoadingScreen) return;
+    const timer = window.setTimeout(() => {
+      setShowDescriptionLoadingScreen(false);
+      setShowDescriptionFinalScreen(true);
+    }, 5000);
+    return () => window.clearTimeout(timer);
+  }, [showDescriptionLoadingScreen]);
+
+  useEffect(() => {
+    return () => {
+      if (mainUploadDelayTimerRef.current !== null) {
+        window.clearTimeout(mainUploadDelayTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleMainImageSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files?.[0]) return;
+
+    if (mainUploadDelayTimerRef.current !== null) {
+      window.clearTimeout(mainUploadDelayTimerRef.current);
+    }
+
+    setShowMainUploadDelay(true);
+    mainUploadDelayTimerRef.current = window.setTimeout(() => {
+      setShowMainUploadDelay(false);
+      mainUploadDelayTimerRef.current = null;
+    }, 5000);
+
+    handleFileSelect(event);
+  };
 
   const startPayment = async () => {
     if (!API_BASE_URL && window.location.hostname.endsWith('github.io')) {
@@ -349,8 +419,15 @@ export const App: FC = () => {
   };
 
   const handleBackToMain = () => {
+    if (mainUploadDelayTimerRef.current !== null) {
+      window.clearTimeout(mainUploadDelayTimerRef.current);
+      mainUploadDelayTimerRef.current = null;
+    }
+    setShowMainUploadDelay(false);
     setShowUploadScreen(false);
+    setShowVideoLoadingScreen(false);
     setShowDescriptionPromptScreen(false);
+    setShowDescriptionLoadingScreen(false);
     setShowDescriptionFinalScreen(false);
     setShowCreateImagePromptScreen(false);
     setShowCreateImageLoadingScreen(false);
@@ -409,6 +486,7 @@ export const App: FC = () => {
       if (
         !image &&
         !showDescriptionPromptScreen &&
+        !showDescriptionLoadingScreen &&
         !showCreateImagePromptScreen &&
         !showEditImagePromptScreen &&
         !showEditImageMainScreen &&
@@ -422,6 +500,8 @@ export const App: FC = () => {
       setQualityResult(null);
       setPaymentModalOpen(false);
       setPaymentError(null);
+      setShowVideoLoadingScreen(false);
+      setShowDescriptionLoadingScreen(false);
       setShowVideoFinalScreen(false);
       setShowDescriptionFinalScreen(false);
       setShowCreateImageLoadingScreen(false);
@@ -455,8 +535,15 @@ export const App: FC = () => {
   };
 
   const handleOpenPromptWithoutImage = () => {
+    if (mainUploadDelayTimerRef.current !== null) {
+      window.clearTimeout(mainUploadDelayTimerRef.current);
+      mainUploadDelayTimerRef.current = null;
+    }
+    setShowMainUploadDelay(false);
     setShowUploadScreen(true);
+    setShowVideoLoadingScreen(false);
     setShowDescriptionPromptScreen(false);
+    setShowDescriptionLoadingScreen(false);
     setShowDescriptionFinalScreen(false);
     setShowCreateImagePromptScreen(false);
     setShowCreateImageLoadingScreen(false);
@@ -479,13 +566,20 @@ export const App: FC = () => {
   };
 
   const handleOpenDescriptionPrompt = () => {
+    if (mainUploadDelayTimerRef.current !== null) {
+      window.clearTimeout(mainUploadDelayTimerRef.current);
+      mainUploadDelayTimerRef.current = null;
+    }
+    setShowMainUploadDelay(false);
     setShowUploadScreen(false);
     setShowDescriptionPromptScreen(true);
+    setShowDescriptionLoadingScreen(false);
     setShowDescriptionFinalScreen(false);
     setShowCreateImagePromptScreen(false);
     setShowCreateImageLoadingScreen(false);
     setShowCreateImageResultScreen(false);
     setShowQualityScreen(false);
+    setShowVideoLoadingScreen(false);
     setShowVideoFinalScreen(false);
     setShowQualityImproved(false);
     setQualityCopied(false);
@@ -495,8 +589,15 @@ export const App: FC = () => {
   };
 
   const handleOpenCreateImagePrompt = () => {
+    if (mainUploadDelayTimerRef.current !== null) {
+      window.clearTimeout(mainUploadDelayTimerRef.current);
+      mainUploadDelayTimerRef.current = null;
+    }
+    setShowMainUploadDelay(false);
     setShowUploadScreen(false);
+    setShowVideoLoadingScreen(false);
     setShowDescriptionPromptScreen(false);
+    setShowDescriptionLoadingScreen(false);
     setShowDescriptionFinalScreen(false);
     setShowCreateImagePromptScreen(true);
     setShowCreateImageLoadingScreen(false);
@@ -519,8 +620,15 @@ export const App: FC = () => {
   };
 
   const handleOpenEditImageFlow = () => {
+    if (mainUploadDelayTimerRef.current !== null) {
+      window.clearTimeout(mainUploadDelayTimerRef.current);
+      mainUploadDelayTimerRef.current = null;
+    }
+    setShowMainUploadDelay(false);
     setShowUploadScreen(false);
+    setShowVideoLoadingScreen(false);
     setShowDescriptionPromptScreen(false);
+    setShowDescriptionLoadingScreen(false);
     setShowDescriptionFinalScreen(false);
     setShowCreateImagePromptScreen(false);
     setShowCreateImageLoadingScreen(false);
@@ -548,8 +656,15 @@ export const App: FC = () => {
   };
 
   const handleOpenEnhanceImageFlow = () => {
+    if (mainUploadDelayTimerRef.current !== null) {
+      window.clearTimeout(mainUploadDelayTimerRef.current);
+      mainUploadDelayTimerRef.current = null;
+    }
+    setShowMainUploadDelay(false);
     setShowUploadScreen(false);
+    setShowVideoLoadingScreen(false);
     setShowDescriptionPromptScreen(false);
+    setShowDescriptionLoadingScreen(false);
     setShowDescriptionFinalScreen(false);
     setShowCreateImagePromptScreen(false);
     setShowCreateImageLoadingScreen(false);
@@ -671,7 +786,16 @@ export const App: FC = () => {
           </ScreenLayer>
           <ScreenLayer active={showMain} direction={direction}>
             <MainScreen
-              onImageSelect={handleFileSelect}
+              onImageSelect={handleMainImageSelect}
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt={Boolean(image)}
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+            />
+          </ScreenLayer>
+          <ScreenLayer active={showMainUploadLoading} direction={direction}>
+            <MainUploadLoadingScreen
               currentStep={currentStep}
               onStepSelect={handleStepSelect}
               canOpenPrompt={Boolean(image)}
@@ -683,7 +807,10 @@ export const App: FC = () => {
             <PromptScreen
               prompt={prompt}
               onPromptChange={setPrompt}
-              onSubmit={() => setShowVideoFinalScreen(true)}
+              onSubmit={() => {
+                setShowVideoLoadingScreen(true);
+                setShowVideoFinalScreen(false);
+              }}
               currentStep={currentStep}
               onStepSelect={handleStepSelect}
               canOpenPrompt={Boolean(image)}
@@ -695,7 +822,11 @@ export const App: FC = () => {
             <PromptDescriptionScreen
               prompt={prompt}
               onPromptChange={setPrompt}
-              onSubmit={() => setShowDescriptionFinalScreen(true)}
+              onSubmit={() => {
+                setShowDescriptionPromptScreen(false);
+                setShowDescriptionLoadingScreen(true);
+                setShowDescriptionFinalScreen(false);
+              }}
               currentStep={currentStep}
               onStepSelect={handleStepSelect}
               canOpenPrompt={Boolean(image) || showDescriptionPromptScreen}
@@ -797,6 +928,26 @@ export const App: FC = () => {
           </ScreenLayer>
           <ScreenLayer active={showEnhanceImageResult} direction={direction}>
             <EnhanceImageResultScreen onBackToMain={handleBackToMain} />
+          </ScreenLayer>
+          <ScreenLayer active={showVideoLoading} direction={direction}>
+            <MainUploadLoadingScreen
+              label="Магия началась..."
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt={Boolean(image)}
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+            />
+          </ScreenLayer>
+          <ScreenLayer active={showDescriptionLoading} direction={direction}>
+            <MainUploadLoadingScreen
+              label="Магия началась..."
+              currentStep={currentStep}
+              onStepSelect={handleStepSelect}
+              canOpenPrompt
+              canOpenPayment={Boolean(image)}
+              canOpenQuality
+            />
           </ScreenLayer>
           <ScreenLayer active={showDescriptionFinal} direction={direction}>
             <PromptDescriptionFinalScreen onBackToMain={handleBackToMain} />
