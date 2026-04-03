@@ -6,6 +6,7 @@ const FeaturesPreview = styled.div`
   position: absolute;
   left: 22px;
   top: 89px;
+  overflow: hidden;
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
@@ -20,6 +21,13 @@ const FeaturesPreview = styled.div`
   border-radius: 36px;
   opacity: 0.5;
   z-index: 1;
+`;
+
+const PreviewVideo = styled.video`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 36px;
 `;
 
 interface HeaderProps {
@@ -39,6 +47,8 @@ export const Header: FC<HeaderProps> = ({
   canOpenPayment,
   canOpenQuality,
 }) => {
+  const previewVideo = `${import.meta.env.BASE_URL}images/1000186690.mp4`;
+
   return (
     <>
       <FlowMenu
@@ -49,7 +59,11 @@ export const Header: FC<HeaderProps> = ({
         canOpenPayment={canOpenPayment}
         canOpenQuality={canOpenQuality}
       />
-      <FeaturesPreview />
+      <FeaturesPreview>
+        <PreviewVideo autoPlay muted loop playsInline preload="auto">
+          <source src={previewVideo} type="video/mp4" />
+        </PreviewVideo>
+      </FeaturesPreview>
     </>
   );
 };
