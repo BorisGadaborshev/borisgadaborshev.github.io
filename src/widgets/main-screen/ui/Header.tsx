@@ -6,28 +6,30 @@ const FeaturesPreview = styled.div`
   position: absolute;
   left: 22px;
   top: 89px;
+  padding: 0;
   overflow: hidden;
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
-  gap: 10px;
-  padding: 10px;
+  gap: 0;
   width: 353px;
   height: 291px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #000;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
   border-radius: 36px;
-  opacity: 0.5;
-  z-index: 1;
+  opacity: 1;
+  z-index: 8;
 `;
 
 const PreviewVideo = styled.video`
+  position: relative;
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 36px;
+  z-index: 9;
 `;
 
 interface HeaderProps {
